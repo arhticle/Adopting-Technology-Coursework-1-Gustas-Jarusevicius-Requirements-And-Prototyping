@@ -2,13 +2,1079 @@
 @tailwind components;
 @tailwind utilities;
 
+/* The starter only set a few base styles here. They are kept, the colours now come from the tokens below
+   so light, dark and high-visibility (colourblind) modes can all switch while the app runs. */
 html, body, #root {
   height: 100%;
 }
 
+/* Everything below this line is plain CSS written after Tailwind's base,
+   so it wins over Tailwind's reset. Tailwind utility classes (flex, gap-2, sr-only ...)
+   are used in App.jsx for simple layout. */
+
+/* ---------- Colour tokens ----------
+   Text pairs are checked against WCAG 2.1 AA (4.5:1 text, 3:1 for borders and icons).
+   Default look = calm and simple. The colourblind / high-visibility mode (data-cb="on")
+   swaps green and red for the Okabe-Ito blue and orange, fills the badges, and makes shapes bolder. */
+:root {
+  --bg: #f4f7f5;
+  --bg-top: #e3eee7;
+  --surface: #ffffff;
+  --surface-2: #ecf1ee;
+  --text: #14201a;
+  --muted: #4a5a51;
+  --border: #7d8d83;
+  --border-soft: #d5ded8;
+  --primary: #1b5e3b;
+  --on-primary: #ffffff;
+  --danger: #a31f1f;
+  --on-danger: #ffffff;
+  --focus: #0b57d0;
+  --bar: #12352a;
+  --on-bar: #ffffff;
+  --shadow: 0 1px 2px rgba(16, 32, 24, 0.07), 0 2px 8px rgba(16, 32, 24, 0.04);
+
+  --feature: #1b7a47;
+  --bug: #c0262d;
+  --soon: #a85d00;
+  --overdue: #c0262d;
+  --calm: #46607a;
+  --done: #48584f;
+
+  /* Homepage "glass": slightly see-through boxes and buttons over the video.
+     Colourblind mode replaces all of these with solid, opaque colours (see below). */
+  --glass-bg: rgba(255, 255, 255, 0.74);
+  --glass-fg: #14201a;
+  --glass-muted: #2f4036;
+  --glass-border: rgba(255, 255, 255, 0.7);
+  --glass-btn-bg: rgba(255, 255, 255, 0.55);
+  --glass-btn-border: rgba(20, 32, 26, 0.6);
+  --glass-primary-bg: #1b5e3b;
+  --glass-primary-fg: #ffffff;
+  --glass-blur: blur(12px);
+  --shade: rgba(6, 14, 11, 0.3);
+
+  --stripe: 4px; /* width of the coloured bar on a card */
+  --bw: 1px; /* border width for controls */
+  --tap: 36px; /* minimum height of buttons and fields */
+}
+
+:root[data-theme='dark'] {
+  --bg: #0e1612;
+  --bg-top: #15241d;
+  --surface: #17211c;
+  --surface-2: #1c2923;
+  --text: #ebf2ee;
+  --muted: #b0bfb6;
+  --border: #7f9187;
+  --border-soft: #2f4037;
+  --primary: #7bd9a5;
+  --on-primary: #0a1a10;
+  --danger: #ff8a80;
+  --on-danger: #2b0a08;
+  --focus: #8ab4ff;
+  --bar: #0a110e;
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+
+  --glass-bg: rgba(8, 20, 15, 0.66);
+  --glass-fg: #ffffff;
+  --glass-muted: #d9e4dd;
+  --glass-border: rgba(255, 255, 255, 0.25);
+  --glass-btn-bg: rgba(255, 255, 255, 0.1);
+  --glass-btn-border: rgba(255, 255, 255, 0.65);
+  --glass-primary-bg: #7bd9a5;
+  --glass-primary-fg: #0a1a10;
+  --shade: rgba(6, 14, 11, 0.45);
+
+  --feature: #5fd08f;
+  --bug: #ff7b72;
+  --soon: #f0b24a;
+  --overdue: #ff7b72;
+  --calm: #8fb0d0;
+  --done: #b0bfb6;
+}
+
+/* ======================================================================
+   COLOURBLIND / HIGH-VISIBILITY MODE (data-cb="on")
+   Everything changes at once, on the homepage and the board:
+   - black and yellow scheme (dark = yellow on black, light = black on white with yellow buttons)
+   - no see-through boxes, everything is solid
+   - thick outlines (2-3px), bigger buttons, bold text
+   - blue and orange (Okabe-Ito) for feature / bug, which stay distinct for most colour vision types
+   ====================================================================== */
+:root[data-cb='on'] {
+  --bg: #ffffff;
+  --bg-top: #ffffff;
+  --surface: #ffffff;
+  --surface-2: #f0f0f0;
+  --text: #000000;
+  --muted: #1a1a1a;
+  --border: #000000;
+  --border-soft: #000000;
+  --primary: #ffd600;
+  --on-primary: #000000;
+  --danger: #9b0000;
+  --on-danger: #ffffff;
+  --focus: #0033cc;
+  --bar: #000000;
+  --on-bar: #ffd600;
+  --shadow: none;
+
+  --feature: #0072b2;
+  --on-feature: #ffffff;
+  --bug: #d55e00;
+  --on-bug: #000000;
+  --overdue: #d55e00;
+  --on-overdue: #000000;
+  --soon: #f0e442;
+  --calm: #0072b2;
+  --done: #1a1a1a;
+
+  --glass-bg: #ffffff;
+  --glass-fg: #000000;
+  --glass-muted: #1a1a1a;
+  --glass-border: #000000;
+  --glass-btn-bg: #ffffff;
+  --glass-btn-border: #000000;
+  --glass-primary-bg: #ffd600;
+  --glass-primary-fg: #000000;
+  --glass-blur: none;
+  --shade: rgba(0, 0, 0, 0.6);
+
+  --stripe: 10px;
+  --bw: 2px;
+  --tap: 46px;
+}
+:root[data-theme='dark'][data-cb='on'] {
+  --bg: #000000;
+  --bg-top: #000000;
+  --surface: #0b0b0b;
+  --surface-2: #161616;
+  --text: #ffffff;
+  --muted: #f2f2f2;
+  --border: #ffd600;
+  --border-soft: #ffd600;
+  --primary: #ffd600;
+  --on-primary: #000000;
+  --danger: #ff7a59;
+  --on-danger: #000000;
+  --focus: #5cc8ff;
+  --bar: #000000;
+  --on-bar: #ffd600;
+  --shadow: none;
+
+  --feature: #56b4e9;
+  --on-feature: #000000;
+  --bug: #e69f00;
+  --on-bug: #000000;
+  --overdue: #d55e00;
+  --on-overdue: #000000;
+  --soon: #f0e442;
+  --calm: #56b4e9;
+  --done: #f2f2f2;
+
+  --glass-bg: #000000;
+  --glass-fg: #ffffff;
+  --glass-muted: #f2f2f2;
+  --glass-border: #ffd600;
+  --glass-btn-bg: #000000;
+  --glass-btn-border: #ffd600;
+  --glass-primary-bg: #ffd600;
+  --glass-primary-fg: #000000;
+  --glass-blur: none;
+  --shade: rgba(0, 0, 0, 0.6);
+}
+
+/* ---------- Base ---------- */
+* {
+  box-sizing: border-box;
+}
 body {
-  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
-    'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-  background-color: #f8fafc; /* slate-50 */
-  color: #0f172a;            /* slate-900 */
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  line-height: 1.5;
+}
+h1,
+h2,
+h3 {
+  font-weight: 700;
+  line-height: 1.25;
+  margin: 0 0 0.5rem;
+}
+h1 {
+  font-size: 1.6rem;
+}
+h2 {
+  font-size: 1.2rem;
+}
+h3 {
+  font-size: 1.05rem;
+}
+p {
+  margin: 0 0 0.75rem;
+}
+.muted {
+  color: var(--muted);
+}
+:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+.skip-link {
+  position: absolute;
+  left: 0.5rem;
+  top: -4rem;
+  background: var(--primary);
+  color: var(--on-primary);
+  padding: 0.6rem 1rem;
+  border-radius: 6px;
+  z-index: 100;
+}
+.skip-link:focus {
+  top: 0.5rem;
+}
+.icon {
+  flex: none;
+}
+
+/* ---------- Controls ---------- */
+.btn {
+  font: inherit;
+  font-size: 0.95rem;
+  min-height: var(--tap);
+  padding: 0.35rem 0.9rem;
+  border: var(--bw) solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.btn:hover {
+  background: var(--surface-2);
+}
+.btn-primary {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: var(--on-primary);
+  font-weight: 600;
+}
+.btn-primary:hover {
+  background: var(--primary);
+  filter: brightness(1.1);
+}
+.btn-danger {
+  background: var(--danger);
+  border-color: var(--danger);
+  color: var(--on-danger);
+  font-weight: 600;
+}
+.btn-danger:hover {
+  background: var(--danger);
+  filter: brightness(1.1);
+}
+.btn-large {
+  min-height: 52px;
+  font-size: 1.05rem;
+  padding: 0.6rem 1.4rem;
+}
+input,
+select,
+textarea {
+  font: inherit;
+  width: 100%;
+  min-height: var(--tap);
+  padding: 0.4rem 0.65rem;
+  border: var(--bw) solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text);
+}
+textarea {
+  resize: vertical;
+}
+input[type='radio'],
+input[type='checkbox'] {
+  width: 1.25rem;
+  height: 1.25rem;
+  min-height: 0;
+  accent-color: var(--primary);
+  flex: none;
+}
+label {
+  font-weight: 600;
+}
+.field {
+  margin-bottom: 0.9rem;
+  flex: 1;
+}
+.field label {
+  display: block;
+  margin-bottom: 0.25rem;
+}
+.field-row {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+.field-row .field {
+  min-width: 200px;
+}
+.hint {
+  color: var(--muted);
+  font-size: 0.9rem;
+  margin: 0.25rem 0 0;
+}
+.error {
+  color: var(--danger);
+  font-weight: 600;
+}
+.choice {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-height: var(--tap);
+  font-weight: 400;
+  cursor: pointer;
+}
+fieldset {
+  border: 1px solid var(--border-soft);
+  border-radius: 10px;
+  margin: 0 0 1rem;
+  padding: 0.5rem 1rem;
+}
+legend {
+  font-weight: 700;
+  padding: 0 0.4rem;
+}
+
+/* ---------- Layout ---------- */
+.app {
+  min-height: 100vh;
+  position: relative;
+}
+/* Board page: soft green wash at the top that fades into a clean light background */
+.app:not(.app-landing) {
+  background: linear-gradient(180deg, var(--bg-top) 0, var(--bg) 380px);
+}
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding: 0.6rem 1.25rem;
+  background: var(--bar);
+  color: var(--on-bar);
+  position: relative;
+  z-index: 5;
+}
+nav {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+.topbar .btn {
+  background: transparent;
+  color: var(--on-bar);
+  border-color: rgba(255, 255, 255, 0.6);
+}
+.topbar .btn:hover {
+  background: rgba(255, 255, 255, 0.14);
+}
+.topbar :focus-visible {
+  outline-color: #ffffff;
+}
+.brand {
+  font: inherit;
+  font-weight: 700;
+  font-size: 1.15rem;
+  letter-spacing: 0.01em;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: none;
+  border: 0;
+  color: var(--on-bar);
+  cursor: pointer;
+  min-height: 40px;
+}
+main {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 1.25rem;
+  position: relative;
+  z-index: 2;
+}
+main:focus {
+  outline: none;
+}
+.page-title {
+  margin-bottom: 0.15rem;
+}
+.greeting {
+  margin-bottom: 1.1rem;
+  font-size: 0.95rem;
+}
+.section-title {
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+  margin-bottom: 0.6rem;
+}
+
+/* ---------- Landing page (background video) ----------
+   Default: slightly see-through "glass" boxes that follow light / dark.
+   Colourblind mode: the same boxes become solid and high contrast (tokens above). */
+.app-landing .topbar {
+  background: transparent; /* no bar or line across the top of the homepage */
+  border-bottom: 0;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+/* The logo and the settings button get their own glass pill so they stay readable over the video */
+.app-landing .brand {
+  background: var(--glass-bg);
+  color: var(--glass-fg);
+  border: var(--bw) solid var(--glass-border);
+  border-radius: 999px;
+  padding: 0 1rem 0 0.5rem;
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
+}
+.app-landing .topbar .btn {
+  background: var(--glass-btn-bg);
+  color: var(--glass-fg);
+  border-color: var(--glass-btn-border);
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
+}
+.app-landing .topbar .btn:hover {
+  background: var(--glass-primary-bg);
+  color: var(--glass-primary-fg);
+}
+.app-landing .topbar :focus-visible {
+  outline-color: var(--focus);
+}
+/* Homepage layout: the page is at least one screen tall, and the pause button sits at the bottom of the normal flow */
+.app-landing {
+  display: flex;
+  flex-direction: column;
+}
+.app-landing main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+.landing-footer {
+  padding-top: 1rem;
+}
+.forest {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  background: #10241b; /* shown if the video or poster can not load */
+}
+.forest-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.forest-shade {
+  position: absolute;
+  inset: 0;
+  background: var(--shade);
+}
+.landing {
+  flex: 1;
+  display: grid;
+  place-items: center;
+  padding: 1rem 0 1rem;
+}
+.landing-card {
+  background: var(--glass-bg);
+  color: var(--glass-fg);
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
+  max-width: 640px;
+  padding: 2rem;
+  border-radius: 14px;
+  border: 1px solid var(--glass-border);
+}
+:root[data-cb='on'] .landing-card {
+  border-width: 3px;
+}
+.landing-card h1 {
+  font-size: 2rem;
+}
+.lead {
+  font-size: 1.1rem;
+}
+.landing-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin: 1.25rem 0;
+}
+.landing-card .btn,
+.pause-btn {
+  background: var(--glass-btn-bg);
+  color: var(--glass-fg);
+  border-color: var(--glass-btn-border);
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
+}
+.landing-card .btn:hover,
+.pause-btn:hover {
+  background: var(--glass-primary-bg);
+  color: var(--glass-primary-fg);
+}
+.landing-card .btn-primary {
+  background: var(--glass-primary-bg);
+  border-color: var(--glass-primary-bg);
+  color: var(--glass-primary-fg);
+}
+:root[data-cb='on'] .landing-card .btn-primary {
+  border-color: var(--glass-btn-border);
+}
+.landing-card .btn-primary:hover {
+  filter: brightness(1.12);
+}
+.small-note {
+  font-size: 0.9rem;
+  color: var(--glass-muted);
+  margin: 0;
+}
+.pause-btn {
+  /* normal flow, bottom left of the homepage. Not position: fixed, so it never overlaps when zoomed in */
+}
+@media (prefers-reduced-motion: reduce) {
+  .card-pop {
+    animation: none !important;
+  }
+}
+
+/* ---------- Deliverables bar ---------- */
+.anchor-bar {
+  background: var(--surface);
+  border: 1px solid var(--border-soft);
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+  padding: 0.9rem 1rem 1rem;
+  margin-bottom: 1.1rem;
+}
+.anchor-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 0.75rem;
+}
+.anchor {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.5rem;
+  background: var(--surface-2);
+  border-radius: 10px;
+  padding: 0.65rem 0.85rem;
+}
+.anchor-name {
+  font-weight: 700;
+}
+.anchor-status {
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+.anchor-status.linked {
+  color: var(--text);
+  font-weight: 600;
+}
+.anchor-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+  width: 100%;
+}
+.anchor-form input {
+  flex: 1;
+  min-width: 140px;
+}
+
+/* ---------- Toolbar and team strip ---------- */
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.9rem;
+  align-items: center;
+}
+.chip {
+  font: inherit;
+  font-size: 0.95rem;
+  min-height: var(--tap);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.25rem 0.9rem 0.25rem 0.35rem;
+  border: var(--bw) solid var(--border-soft);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+}
+:root[data-cb='on'] .chip {
+  border-color: var(--border);
+}
+.chip:hover {
+  background: var(--surface-2);
+}
+.chip[aria-pressed='true'] {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: var(--on-primary);
+  font-weight: 600;
+}
+.chip[aria-pressed='true']::after {
+  content: ' ✓';
+  content: ' ✓' / ''; /* hide the tick from screen readers, aria-pressed already says it */
+}
+.avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: inline-grid;
+  place-items: center;
+  font-size: 0.8rem;
+  font-weight: 700;
+  background: var(--surface-2);
+  color: var(--text);
+  flex: none;
+}
+.chip[aria-pressed='true'] .avatar {
+  background: rgba(255, 255, 255, 0.85);
+  color: #14201a;
+}
+.count {
+  font-weight: 400;
+}
+.filter-note {
+  margin: 0 0 0.75rem;
+  font-weight: 600;
+}
+
+/* ---------- Board ---------- */
+.board {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(15.5rem, 1fr));
+  gap: 1rem;
+  align-items: start;
+}
+.column {
+  background: var(--surface-2);
+  border-radius: 14px;
+  padding: 0.5rem 0.6rem 0.7rem;
+}
+.column-head {
+  margin: 0 0 0.35rem;
+}
+.column-toggle {
+  font: inherit;
+  font-weight: 700;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  width: 100%;
+  min-height: var(--tap);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: none;
+  border: 0;
+  color: var(--text);
+  cursor: pointer;
+  padding: 0.25rem 0.4rem;
+  border-radius: 8px;
+}
+.column-toggle:hover {
+  background: var(--surface);
+}
+.column-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+.column-list[hidden] {
+  display: none;
+}
+.empty {
+  padding: 0.5rem;
+  margin: 0;
+}
+
+/* ---------- Task card ----------
+   Feature = solid bar, Bug = broken (dashed) bar. The shape differs as well as the colour,
+   and every badge also has a word and an icon. */
+.card {
+  position: relative;
+  overflow: hidden;
+  background: var(--surface);
+  border: var(--bw) solid var(--border-soft);
+  border-radius: 10px;
+  box-shadow: var(--shadow);
+  padding: 0.8rem 0.85rem 0.8rem calc(var(--stripe) + 0.85rem);
+}
+:root[data-cb='on'] .card {
+  border-color: var(--border);
+}
+.card::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: var(--stripe);
+  background: var(--feature);
+}
+.card-bug::before {
+  background: repeating-linear-gradient(to bottom, var(--bug) 0 8px, transparent 8px 12px);
+}
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  line-height: 1.4;
+  padding: 0.1rem 0.55rem;
+  border-radius: 6px;
+  border: var(--bw) solid var(--tone-bd, var(--border-soft));
+  background: var(--tone-bg, transparent);
+  color: var(--tone-fg, var(--text));
+}
+.badge-feature {
+  --tone-bd: color-mix(in srgb, var(--feature) 55%, transparent);
+  --tone-bg: color-mix(in srgb, var(--feature) 10%, var(--surface));
+}
+.badge-feature .icon {
+  color: var(--feature);
+}
+.badge-bug {
+  --tone-bd: color-mix(in srgb, var(--bug) 55%, transparent);
+  --tone-bg: color-mix(in srgb, var(--bug) 10%, var(--surface));
+}
+.badge-bug .icon {
+  color: var(--bug);
+}
+.due-calm {
+  --tone-bd: var(--border-soft);
+}
+.due-calm .icon {
+  color: var(--calm);
+}
+.due-soon {
+  --tone-bd: color-mix(in srgb, var(--soon) 60%, transparent);
+  --tone-bg: color-mix(in srgb, var(--soon) 13%, var(--surface));
+}
+.due-soon .icon {
+  color: var(--soon);
+}
+.due-overdue {
+  --tone-bd: color-mix(in srgb, var(--overdue) 60%, transparent);
+  --tone-bg: color-mix(in srgb, var(--overdue) 13%, var(--surface));
+  font-weight: 700;
+}
+.due-overdue .icon {
+  color: var(--overdue);
+}
+.due-done {
+  --tone-fg: var(--muted);
+}
+.due-done .icon {
+  color: var(--done);
+}
+.due-none {
+  --tone-fg: var(--muted);
+  font-weight: 400;
+}
+
+/* High-visibility mode: solid, bold badges with dark or white text chosen for contrast */
+:root[data-cb='on'] .badge {
+  font-weight: 800;
+  padding: 0.15rem 0.6rem;
+  --tone-bd: var(--text);
+}
+:root[data-cb='on'] .badge .icon {
+  color: inherit;
+}
+:root[data-cb='on'] .badge-feature {
+  --tone-bg: var(--feature);
+  --tone-fg: var(--on-feature);
+  --tone-bd: var(--feature);
+}
+:root[data-cb='on'] .badge-bug {
+  --tone-bg: var(--bug);
+  --tone-fg: var(--on-bug);
+  --tone-bd: var(--bug);
+  border-style: dashed;
+  border-color: var(--text);
+}
+:root[data-cb='on'] .due-calm {
+  --tone-bg: var(--surface-2);
+  --tone-fg: var(--text);
+  --tone-bd: var(--feature);
+}
+:root[data-cb='on'] .due-soon {
+  --tone-bg: #f0e442;
+  --tone-fg: #000000;
+  --tone-bd: #000000;
+}
+:root[data-cb='on'] .due-overdue {
+  --tone-bg: var(--overdue);
+  --tone-fg: var(--on-overdue);
+  --tone-bd: var(--text);
+  text-decoration: underline;
+}
+:root[data-cb='on'] .due-done {
+  --tone-bg: var(--surface-2);
+  --tone-fg: var(--text);
+  --tone-bd: var(--border);
+}
+:root[data-cb='on'] .due-none {
+  --tone-fg: var(--text);
+  --tone-bd: var(--border);
+}
+
+.card-title {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 0.4rem;
+}
+.card-owner {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.4rem;
+  font-size: 0.95rem;
+}
+.card-tool,
+.card-comments {
+  font-size: 0.85rem;
+  color: var(--muted);
+  margin-bottom: 0.4rem;
+}
+.card-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+.control-label {
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+.card-pop {
+  animation: pop 0.9s ease;
+}
+@keyframes pop {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 var(--feature);
+  }
+  35% {
+    transform: scale(1.03);
+    box-shadow: 0 0 0 8px transparent;
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* ---------- Dialogs ---------- */
+.modal {
+  border: 1px solid var(--border-soft);
+  border-radius: 14px;
+  padding: 0;
+  width: min(560px, calc(100vw - 2rem));
+  max-height: calc(100vh - 2rem);
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+}
+.modal-wide {
+  width: min(760px, calc(100vw - 2rem));
+}
+.modal::backdrop {
+  background: rgba(6, 14, 11, 0.6);
+}
+.modal-inner {
+  padding: 1rem 1.25rem 1.25rem;
+}
+.modal-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+.modal-head h2 {
+  margin: 0;
+}
+.confirm-text {
+  font-weight: 700;
+}
+.context-box,
+.comments {
+  border: 1px solid var(--border-soft);
+  background: var(--surface-2);
+  border-radius: 10px;
+  padding: 0.75rem 1rem;
+  margin-bottom: 1rem;
+}
+.comment-list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 0.75rem;
+}
+.comment-list li {
+  border-bottom: 1px solid var(--border-soft);
+  padding: 0.4rem 0;
+}
+.comment-list p {
+  margin: 0.2rem 0 0;
+}
+.member-list {
+  padding-left: 1.2rem;
+  list-style: disc;
+  margin-bottom: 1rem;
+}
+
+/* ---------- Toast ---------- */
+.toast-region {
+  position: fixed;
+  left: 50%;
+  bottom: 1rem;
+  transform: translateX(-50%);
+  z-index: 50;
+  pointer-events: none;
+  width: max-content;
+  max-width: calc(100vw - 2rem);
+}
+.toast {
+  background: var(--text);
+  color: var(--bg);
+  padding: 0.7rem 1.1rem;
+  border-radius: 8px;
+  font-weight: 600;
+}
+
+/* ---------- Colourblind mode: shared component overrides ---------- */
+:root[data-cb='on'] body {
+  font-weight: 500;
+}
+:root[data-cb='on'] .topbar {
+  border-bottom: 3px solid var(--on-bar);
+}
+:root[data-cb='on'] .app-landing .topbar {
+  background: transparent;
+  border-bottom: 0;
+}
+:root[data-cb='on'] .app-landing .brand {
+  border-width: 2px;
+}
+:root[data-cb='on'] .app-landing .topbar .btn {
+  background: var(--glass-btn-bg);
+  color: var(--glass-fg);
+  border-color: var(--glass-btn-border);
+}
+:root[data-cb='on'] .app-landing .topbar .btn:hover {
+  background: var(--primary);
+  color: var(--on-primary);
+}
+:root[data-cb='on'] .topbar .btn {
+  border-color: var(--on-bar);
+  color: var(--on-bar);
+  background: transparent;
+}
+:root[data-cb='on'] .topbar .btn:hover,
+:root[data-cb='on'] .btn:hover,
+:root[data-cb='on'] .chip:hover {
+  background: var(--primary);
+  color: var(--on-primary);
+}
+:root[data-cb='on'] .topbar :focus-visible {
+  outline-color: #ffffff;
+}
+:root[data-cb='on'] .column,
+:root[data-cb='on'] .anchor-bar,
+:root[data-cb='on'] .anchor,
+:root[data-cb='on'] .context-box,
+:root[data-cb='on'] .comments,
+:root[data-cb='on'] fieldset {
+  border: 2px solid var(--border);
+}
+:root[data-cb='on'] .modal {
+  border: 3px solid var(--border);
+  box-shadow: none;
+}
+:root[data-cb='on'] .modal::backdrop {
+  background: rgba(0, 0, 0, 0.85);
+}
+:root[data-cb='on'] .avatar {
+  border: 2px solid var(--border);
+}
+:root[data-cb='on'] .chip[aria-pressed='true'] .avatar {
+  background: #ffffff;
+  color: #000000;
+  border-color: #000000;
+}
+:root[data-cb='on'] .toast {
+  background: var(--primary);
+  color: var(--on-primary);
+  border: 2px solid var(--on-primary);
+}
+:root[data-cb='on'] .section-title,
+:root[data-cb='on'] .muted,
+:root[data-cb='on'] .hint,
+:root[data-cb='on'] .card-tool,
+:root[data-cb='on'] .card-comments {
+  color: var(--text);
+}
+:root[data-cb='on'] .column-toggle {
+  font-weight: 800;
+}
+:root[data-cb='on'] .column-toggle:hover {
+  background: var(--primary);
+  color: var(--on-primary);
+}
+
+/* ---------- Small screens ---------- */
+@media (max-width: 640px) {
+  h1 {
+    font-size: 1.4rem;
+  }
+  main {
+    padding: 1rem;
+  }
+  .landing-card {
+    padding: 1.25rem;
+  }
+  .landing-card h1 {
+    font-size: 1.6rem;
+  }
+  .board {
+    grid-template-columns: 1fr;
+  }
 }
