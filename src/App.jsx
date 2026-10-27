@@ -107,20 +107,21 @@ function formatDateTime(iso) {
 
 // Builds the text that "Copy context" puts on the clipboard (FR6).
 function buildContextText(task, memberName, statusLabel) {
-  return [
-    `Task: ${task.title}`,
-    `Type: ${task.type === 'bug' ? 'Bug' : 'Feature'}`,
-    `Status: ${statusLabel}`,
-    `Owner: ${memberName}`,
-    task.description ? `Description: ${task.description}` : '',
-    `AI tool used: ${task.contextTool}`,
+  const lines = [
+    `# ${task.title}`,
     '',
-    'Context:',
-    task.context || '(no context saved yet)',
+    `- **Type:** ${task.type === 'bug' ? 'Bug' : 'Feature'}`,
+    `- **Status:** ${statusLabel}`,
+    `- **Owner:** ${memberName}`,
+    `- **AI tool used:** ${task.contextTool}`,
   ]
-    .filter((line, i, arr) => line !== '' || arr[i - 1] !== '')
-    .join('\n')
+  if (task.description) lines.push('', '## Description', task.description)
+  lines.push('', '## Context', task.context || '(no context saved yet)')
+  return lines.join('\n')
 }
+
+// Starter text for a new task's context box, so the next person gets a usable briefing (FR5)
+const CONTEXT_TEMPLATE = 'Background:\n\nConstraints:\n\nTried so far:\n\nPick up here:\n'
 
 function newId(prefix) {
   return `${prefix}${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`
@@ -136,7 +137,7 @@ const TASK_TYPES = [
   { id: 'bug', label: 'Bug' },
 ]
 
-const AI_TOOLS = ['Claude', 'ChatGPT', 'Gemini', 'Cursor', 'GitHub Copilot', 'Other', 'None']
+const AI_TOOLS = ['Claude', 'ChatGPT', 'Gemini', 'Cursor', 'GitHub Copilot', 'Lovable', 'Replit', 'Other', 'None']
 
 // Sample team. The starter had three placeholder names, here they are objects with the
 // details the client asked for (name, email, GitHub). Task.assignee stores the member id.
@@ -159,6 +160,7 @@ function makeSeedTasks() {
   return [
     {
       id: 't1',
+      createdDate: addDays(-3),
       title: 'Set up login form',
       description: 'Simple email and password form for the team page.',
       type: 'feature',
@@ -172,6 +174,7 @@ function makeSeedTasks() {
     },
     {
       id: 't2',
+      createdDate: addDays(-4),
       title: 'Cards overlap on small screens',
       description: 'Columns squash together under 600px wide.',
       type: 'bug',
@@ -187,6 +190,7 @@ function makeSeedTasks() {
     },
     {
       id: 't3',
+      createdDate: addDays(-9),
       title: 'Database schema for tasks',
       description: 'Tables for tasks, members and comments.',
       type: 'feature',
@@ -200,6 +204,7 @@ function makeSeedTasks() {
     },
     {
       id: 't4',
+      createdDate: addDays(-12),
       title: 'Write project README',
       description: 'Explain setup and how to run the app.',
       type: 'feature',
@@ -326,10 +331,10 @@ function ForestVideo({ paused, onBlocked }) {
         className="forest-video"
         src="/forest.mp4"
         poster="/forest-poster.jpg"
+        autoPlay
         muted
         loop
         playsInline
-        autoPlay={!paused}
         preload="auto"
         tabIndex={-1}
       />
@@ -458,7 +463,7 @@ function Landing({ onEnter }) {
 // ======================================================================
 
 // One panel for every accessibility choice (FR13). Each one is saved so it is remembered next visit.
-function SettingsPanel({ open, onClose, settings, setSettings, paused, setPaused }) {
+function SettingsPanel({ open, onClose, settings, setSettings }) {
   const update = (key, value) => setSettings({ ...settings, [key]: value })
 
   return (
@@ -479,11 +484,11 @@ function SettingsPanel({ open, onClose, settings, setSettings, paused, setPaused
 
       <fieldset>
         <legend>Text size</legend>
+        <p className="hint">The team board starts compact. Choose a larger size to zoom everything in.</p>
         {[
-          ['normal', 'Standard'],
-          ['large', 'Large'],
-          ['xlarge', 'Extra large'],
-          ['xxlarge', 'Largest'],
+          ['normal', 'Default'],
+          ['large', 'Large (+25%)'],
+          ['xlarge', 'Extra large (+50%)'],
         ].map(([value, label]) => (
           <label key={value} className="choice">
             <input type="radio" name="textSize" checked={settings.textSize === value} onChange={() => update('textSize', value)} />
@@ -499,8 +504,8 @@ function SettingsPanel({ open, onClose, settings, setSettings, paused, setPaused
           Colourblind-friendly, high-visibility mode (black and yellow, solid boxes, thick outlines, blue and orange badges, bigger buttons)
         </label>
         <label className="choice">
-          <input type="checkbox" checked={paused} onChange={(e) => setPaused(e.target.checked)} />
-          Pause the moving background video (it plays again next time you open the site)
+          <input type="checkbox" checked={settings.paused} onChange={(e) => update('paused', e.target.checked)} />
+          Pause moving backgrounds
         </label>
         <label className="choice">
           <input type="checkbox" checked={settings.effects} onChange={(e) => update('effects', e.target.checked)} />
@@ -508,7 +513,6 @@ function SettingsPanel({ open, onClose, settings, setSettings, paused, setPaused
         </label>
       </fieldset>
 
-      <p className="hint">Standard text is a little smaller on the board so more tasks fit on screen. Use Large, Extra large or Largest if you want it bigger, or zoom the browser.</p>
       <p className="hint">High-visibility mode keeps your Light or Dark choice: Dark is yellow on black, Light is black on white with yellow buttons. Bugs, features and due dates always have an icon and a word as well as a colour.</p>
     </Modal>
   )
@@ -657,7 +661,10 @@ function AnchorBar({ anchors, setAnchors }) {
               <>
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="anchor-name">{a.label}</span>
-                  <span className={a.url ? 'anchor-status linked' : 'anchor-status'}>{a.url ? 'Linked' : 'Not added yet'}</span>
+                  <span className={a.url ? 'anchor-status linked' : 'anchor-status'}>
+                    <span className={a.url ? 'dot dot-filled' : 'dot'} aria-hidden="true" />
+                    {a.url ? 'Linked' : 'Not added yet'}
+                  </span>
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
                   {a.url && (
@@ -754,7 +761,7 @@ function Icon({ name }) {
 
 // One card on the board. Type and due state are shown with colour, a symbol AND words (FR3, FR8, NFR2).
 // Moving a card uses a dropdown, not drag and drop, so keyboard and screen reader users can do it (FR4).
-function TaskCard({ task, member, onStatus, onEdit, onCopy, justDone }) {
+function TaskCard({ task, member, team, onStatus, onHandOff, onEdit, onCopy, justDone, handed }) {
   const due = dueInfo(task)
   const isBug = task.type === 'bug'
   const ownerName = member ? member.name : 'Unassigned'
@@ -776,7 +783,7 @@ function TaskCard({ task, member, onStatus, onEdit, onCopy, justDone }) {
         {task.title}
       </h3>
 
-      <p className="card-owner">
+      <p className={`card-owner ${handed ? 'owner-flash' : ''}`}>
         <span className="avatar" aria-hidden="true">
           {member ? initials(member.name) : '?'}
         </span>
@@ -793,17 +800,32 @@ function TaskCard({ task, member, onStatus, onEdit, onCopy, justDone }) {
         </p>
       )}
 
-      <div className="card-controls">
-        <label htmlFor={`status-${task.id}`} className="control-label">
-          Move to
-        </label>
-        <select id={`status-${task.id}`} value={task.status} onChange={(e) => onStatus(task, e.target.value)}>
-          {STAGES.map((s) => (
-            <option key={s.id} value={s.id}>
-              {s.label}
-            </option>
-          ))}
-        </select>
+      <div className="card-selects">
+        <div>
+          <label htmlFor={`status-${task.id}`} className="control-label">
+            Move to
+          </label>
+          <select id={`status-${task.id}`} value={task.status} onChange={(e) => onStatus(task, e.target.value)}>
+            {STAGES.map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.label}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label htmlFor={`owner-${task.id}`} className="control-label">
+            Hand off to
+          </label>
+          <select id={`owner-${task.id}`} value={task.assignee || ''} onChange={(e) => onHandOff(task, e.target.value)}>
+            <option value="">Unassigned</option>
+            {team.map((m) => (
+              <option key={m.id} value={m.id}>
+                {m.name}
+              </option>
+            ))}
+          </select>
+        </div>
       </div>
 
       <div className="flex flex-wrap gap-2">
@@ -840,6 +862,7 @@ const EMPTY = {
   contextTool: 'Claude',
   context: '',
   contextUpdatedAt: null,
+  createdDate: '',
   comments: [],
 }
 
@@ -855,7 +878,12 @@ function TaskModal({ open, task, team, userName, onSave, onDelete, onClose, onCo
 
 function TaskForm({ task, team, userName, onSave, onDelete, onClose, onCopy }) {
   const isNew = !task || !task.id
-  const [form, setForm] = useState(() => ({ ...EMPTY, assignee: team[0] ? team[0].id : '', ...(task || {}) }))
+  const [form, setForm] = useState(() => ({
+    ...EMPTY,
+    assignee: team[0] ? team[0].id : '',
+    ...(isNew ? { context: CONTEXT_TEMPLATE } : {}),
+    ...(task || {}),
+  }))
   const [commentText, setCommentText] = useState('')
   const [error, setError] = useState('')
   const [confirmDelete, setConfirmDelete] = useState(false)
@@ -869,12 +897,16 @@ function TaskForm({ task, team, userName, onSave, onDelete, onClose, onCopy }) {
       return
     }
     const old = task || {}
-    const contextChanged = old.context !== form.context || old.contextTool !== form.contextTool
+    // a context box that still holds only the empty template counts as no context
+    const context = form.context.trim() === CONTEXT_TEMPLATE.trim() ? '' : form.context
+    const contextChanged = (old.context || '') !== context || old.contextTool !== form.contextTool
     onSave({
       ...form,
+      context,
       id: form.id || newId('t'),
+      createdDate: form.createdDate || toDateStr(new Date()),
       title: form.title.trim(),
-      contextUpdatedAt: contextChanged ? new Date().toISOString() : form.contextUpdatedAt,
+      contextUpdatedAt: context && contextChanged ? new Date().toISOString() : form.contextUpdatedAt,
     })
   }
 
@@ -954,6 +986,7 @@ function TaskForm({ task, team, userName, onSave, onDelete, onClose, onCopy }) {
           <label htmlFor="f-context">Prompt, conversation or error log</label>
           <textarea id="f-context" rows={6} value={form.context} onChange={set('context')} />
           <p className="hint">Last updated: {formatDateTime(form.contextUpdatedAt)}</p>
+          {form.createdDate && <p className="hint">Task created on {form.createdDate}</p>}
         </div>
         <button type="button" className="btn" onClick={() => onCopy(form)}>
           Copy context
@@ -1028,7 +1061,7 @@ function TaskForm({ task, team, userName, onSave, onDelete, onClose, onCopy }) {
 // ======================================================================
 
 // The four-column board (FR1). Every column is a labelled region and can be collapsed (FR11).
-function Board({ tasks, team, hideDone, collapsed, setCollapsed, justDone, onStatus, onEdit, onCopy }) {
+function Board({ tasks, team, hideDone, collapsed, setCollapsed, justDone, handedId, onStatus, onHandOff, onEdit, onCopy }) {
   const toggle = (id) => setCollapsed(collapsed.includes(id) ? collapsed.filter((c) => c !== id) : [...collapsed, id])
   const columns = hideDone ? STAGES.filter((s) => s.id !== 'done') : STAGES
 
@@ -1055,8 +1088,11 @@ function Board({ tasks, team, hideDone, collapsed, setCollapsed, justDone, onSta
                   key={t.id}
                   task={t}
                   member={team.find((m) => m.id === t.assignee)}
+                  team={team}
                   justDone={justDone === t.id}
+                  handed={handedId === t.id}
                   onStatus={onStatus}
+                  onHandOff={onHandOff}
                   onEdit={onEdit}
                   onCopy={onCopy}
                 />
@@ -1074,17 +1110,14 @@ function Board({ tasks, team, hideDone, collapsed, setCollapsed, justDone, onSta
 // DONE M4 tasks | DONE M5 editing | DONE M11 anchors (these were the starter TODOs).
 // ======================================================================
 
-// Text size for each setting. The board is denser, so "Standard" is a bit smaller there (14px instead of 16px).
-const BOARD_SIZES = { normal: '87.5%', large: '100%', xlarge: '125%', xxlarge: '150%' }
-const LANDING_SIZES = { normal: '100%', large: '115%', xlarge: '130%', xxlarge: '150%' }
-
-// The video plays automatically on every visit. The only exception is a device that asks for reduced motion.
-function prefersReducedMotion() {
-  return typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches
-}
+// Text size = a base for the page (the board starts compact at 87.5%) times the person's choice.
+// Percentages keep respecting the size set in the browser.
+const TEXT_MULTIPLIER = { normal: 1, large: 1.25, xlarge: 1.5 }
+const BASE_PERCENT = { landing: 100, board: 87.5 }
 
 function defaultSettings() {
-  return { theme: 'system', textSize: 'normal', colourblind: false, effects: true }
+  const reduce = typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  return { theme: 'system', textSize: 'normal', colourblind: false, paused: reduce, effects: true }
 }
 
 export default function App() {
@@ -1092,7 +1125,6 @@ export default function App() {
   const [userName, setUserName] = useState('Guest')
 
   const [settings, setSettings] = useLocalStorage('vt.settings', defaultSettings)
-  const [paused, setPaused] = useState(prefersReducedMotion) // not saved, so the video autoplays on every visit
   const [tasks, setTasks] = useLocalStorage('vt.tasks', makeSeedTasks)
   const [team, setTeam] = useLocalStorage('vt.team', TEAM)
   const [anchors, setAnchors] = useLocalStorage('vt.anchors', SEED_ANCHORS)
@@ -1105,6 +1137,7 @@ export default function App() {
   const [teamOpen, setTeamOpen] = useState(false)
   const [toast, setToast] = useState('')
   const [justDone, setJustDone] = useState(null)
+  const [handedId, setHandedId] = useState(null)
   const toastTimer = useRef(null)
 
   // Apply the display settings to the page (FR13)
@@ -1122,9 +1155,16 @@ export default function App() {
   useEffect(() => {
     const root = document.documentElement
     root.dataset.cb = settings.colourblind ? 'on' : 'off'
-    const sizes = view === 'landing' ? LANDING_SIZES : BOARD_SIZES
-    root.style.fontSize = sizes[settings.textSize] || sizes.normal
-  }, [settings.colourblind, settings.textSize, view])
+    root.dataset.motion = settings.paused ? 'paused' : 'play'
+    root.style.fontSize = `${BASE_PERCENT[view] * (TEXT_MULTIPLIER[settings.textSize] || 1)}%`
+  }, [settings.colourblind, settings.paused, settings.textSize, view])
+
+  // The background video autoplays on every visit, unless the device asks for reduced motion
+  useEffect(() => {
+    const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    setSettings((s) => ({ ...s, paused: !!reduce }))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   // One polite live region announces every message, for screen readers too (WCAG 4.1.3)
   const say = (message) => {
@@ -1164,6 +1204,14 @@ export default function App() {
     }
   }
 
+  const handOff = (task, assignee) => {
+    setTasks(tasks.map((t) => (t.id === task.id ? { ...t, assignee } : t)))
+    const to = assignee ? (team.find((m) => m.id === assignee) || {}).name : 'nobody'
+    setHandedId(task.id)
+    setTimeout(() => setHandedId(null), 1700)
+    say(assignee ? `"${task.title}" handed off to ${to}.` : `"${task.title}" is now unassigned.`)
+  }
+
   const saveTask = (task) => {
     const exists = tasks.some((t) => t.id === task.id)
     setTasks(exists ? tasks.map((t) => (t.id === task.id ? task : t)) : [...tasks, task])
@@ -1191,7 +1239,7 @@ export default function App() {
       <a href="#main" className="skip-link">
         Skip to main content
       </a>
-      {view === 'landing' && <ForestVideo paused={paused} onBlocked={() => setPaused(true)} />}
+      {view === 'landing' && <ForestVideo paused={settings.paused} onBlocked={() => setSettings((s) => ({ ...s, paused: true }))} />}
 
       <header className="topbar">
         <button type="button" className="brand" onClick={() => setView('landing')} aria-label="VibeTracker, go to the start page">
@@ -1215,15 +1263,7 @@ export default function App() {
 
       <main id="main" tabIndex={-1}>
         {view === 'landing' ? (
-          <>
-            <Landing onEnter={enter} />
-            {/* In the normal page flow (not fixed), so it can never sit on top of other content when zoomed in */}
-            <div className="landing-footer">
-              <button type="button" className="btn pause-btn" aria-pressed={paused} onClick={() => setPaused(!paused)}>
-                {paused ? 'Play background animation' : 'Pause background animation'}
-              </button>
-            </div>
-          </>
+          <Landing onEnter={enter} />
         ) : (
           <>
             <h1 className="page-title">Team board</h1>
@@ -1273,7 +1313,9 @@ export default function App() {
               collapsed={collapsed}
               setCollapsed={setCollapsed}
               justDone={justDone}
+              handedId={handedId}
               onStatus={changeStatus}
+              onHandOff={handOff}
               onEdit={(t) => setEditing(t)}
               onCopy={copyContext}
             />
@@ -1281,8 +1323,16 @@ export default function App() {
         )}
       </main>
 
+      {view === 'landing' && (
+        <div className="pause-wrap">
+          <button type="button" className="btn pause-btn" aria-pressed={settings.paused} onClick={() => setSettings({ ...settings, paused: !settings.paused })}>
+            {settings.paused ? 'Play background animation' : 'Pause background animation'}
+          </button>
+        </div>
+      )}
+
       <TaskModal open={editing !== null} task={editing} team={team} userName={userName} onSave={saveTask} onDelete={deleteTask} onClose={() => setEditing(null)} onCopy={copyContext} />
-      <SettingsPanel open={settingsOpen} onClose={() => setSettingsOpen(false)} settings={settings} setSettings={setSettings} paused={paused} setPaused={setPaused} />
+      <SettingsPanel open={settingsOpen} onClose={() => setSettingsOpen(false)} settings={settings} setSettings={setSettings} />
       <TeamDialog open={teamOpen} onClose={() => setTeamOpen(false)} team={team} setTeam={setTeam} />
 
       <div className="toast-region" role="status" aria-live="polite">
